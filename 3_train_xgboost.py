@@ -1,103 +1,103 @@
 import pandas as pd
+import numpy as np
 import xgboost as xgb
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, RandomizedSearchCV
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 import matplotlib.pyplot as plt
 import seaborn as sns
-import time
 import joblib
+import time
 
-# 1. Đọc dữ liệu đặc trưng
-print("Dang tai du lieu huan luyen...")
+# 1. Đọc dữ liệu
+print("Dang tai du lieu...")
 try:
     df = pd.read_csv('dataset_training_ready.csv')
 except FileNotFoundError:
-    print("Loi: Khong tim thay file 'dataset_training_ready.csv'.")
+    print("Loi: Khong tim thay file dataset_training_ready.csv")
     exit()
 
-# Tách Feature (X) và Label (y)
 X = df.drop(columns=['label'])
 y = df['label']
 
-print(f"Tong so mau: {len(df)}")
-print(f"So luong dac trung: {len(X.columns)} {list(X.columns)}")
+print(f"Features ({len(X.columns)}): {list(X.columns)}")
 
-# 2. Chia tập dữ liệu (80% Train - 20% Test)
+# Chia tập dữ liệu (80train, 20test)
 X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.2, random_state=42, stratify=y
 )
 
-# 3. Cấu hình mô hình XGBoost chạy trên GPU (RTX 4050)
-print("\nDang khoi tao mo hinh XGBoost voi GPU...")
-model = xgb.XGBClassifier(
-    n_estimators=500,        # Số lượng cây quyết định (càng nhiều càng kỹ, nhưng lâu)
-    learning_rate=0.05,      # Tốc độ học
-    max_depth=12,            # Độ sâu của cây (sâu quá dễ bị học vẹt)
-    subsample=0.8,           # Mỗi cây chỉ học trên 80% dữ liệu (tránh học vẹt)
-    colsample_bytree=0.8,    # Mỗi cây chỉ dùng 80% đặc trưng
-    tree_method='hist',      # Phương pháp tối ưu cho dữ liệu lớn
-    device='cuda',           # QUAN TRỌNG: Dòng này kích hoạt GPU RTX 4050
+# 2. Cấu hình XGBoost
+print("\n--- BAT DAU HUAN LUYEN XGBOOST ---")
+
+# Thiết lập bộ tham số để tìm kiếm (Tuning)
+param_dist = {
+    'n_estimators': [100, 200, 300],        # Số lượng cây (nhiều hơn thường tốt hơn)
+    'learning_rate': [0.01, 0.1, 0.2],      # Tốc độ học (thấp = kỹ, cao = nhanh)
+    'max_depth': [4, 6, 8, 10],             # Độ sâu của cây (sâu quá dễ overfit)
+    'colsample_bytree': [0.7, 1.0],         # Lấy mẫu đặc trưng (tránh học vẹt)
+    'subsample': [0.7, 0.8, 1.0]            # Lấy mẫu dữ liệu
+}
+
+xgb_clf = xgb.XGBClassifier(
+    objective='binary:logistic',
     eval_metric='logloss',
-    early_stopping_rounds=20 # Dừng nếu không học tốt hơn sau 20 vòng
+    # Đã xóa dòng use_label_encoder
+    random_state=42,
+    n_jobs=-1
 )
 
-# 4. Huấn luyện
-print("Bat dau huan luyen...")
+# Dùng RandomizedSearchCV để tìm cấu hình tốt nhất
+random_search = RandomizedSearchCV(
+    xgb_clf, 
+    param_distributions=param_dist, 
+    n_iter=20,          # Thử 20 tổ hợp ngẫu nhiên (chạy khá nhanh)
+    scoring='accuracy', 
+    n_jobs=-1, 
+    cv=3, 
+    verbose=1,
+    random_state=42
+)
+
 start_time = time.time()
-
-model.fit(
-    X_train, y_train,
-    eval_set=[(X_test, y_test)],
-    verbose=50
-)
-
+random_search.fit(X_train, y_train)
 end_time = time.time()
-print(f"\n---> Huan luyen xong trong: {end_time - start_time:.2f} giay!")
 
-# 5. Đánh giá kết quả
-print("\n--- KET QUA DANH GIA ---")
-y_pred = model.predict(X_test)
+print(f"\n[DONE] Training hoan tat trong {end_time - start_time:.2f}s")
+best_model = random_search.best_estimator_
+print(f"Tham so tot nhat: {random_search.best_params_}")
+
+# 3. Đánh giá kết quả
+print("\n--- KET QUA DANH GIA (XGBOOST) ---")
+y_pred = best_model.predict(X_test)
 
 accuracy = accuracy_score(y_test, y_pred)
 print(f"Do chinh xac (Accuracy): {accuracy * 100:.2f}%")
+print("-" * 30)
+print(classification_report(y_test, y_pred, target_names=['Legit', 'DGA']))
 
-print("\nClassification Report:")
-print(classification_report(
-    y_test, y_pred,
-    target_names=['Legit Domain', 'DGA Domain']
-))
+# 4. Phân tích đặc trưng quan trọng (Feature Importance)
+importances = best_model.feature_importances_
+indices = np.argsort(importances)[::-1]
+print("\nTop Dac trung quan trong nhat (XGBoost):")
+for i in range(len(X.columns)):
+    print(f"{i+1}. {X.columns[indices[i]]} ({importances[indices[i]]:.4f})")
 
-# 6. Biểu đồ Confusion Matrix
-plt.figure(figsize=(8, 6))
+# 5. Vẽ Confusion Matrix
+print("\n--- MA TRAN NHAM LAN ---")
 cm = confusion_matrix(y_test, y_pred)
+tn, fp, fn, tp = cm.ravel()
+print(f"True Negative (Sach dung): {tn} | False Positive (Bao nham): {fp}")
+print(f"False Negative (Sot DGA):  {fn} | True Positive (Bat dung):  {tp}")
 
-sns.heatmap(
-    cm,
-    annot=True,
-    fmt='d',
-    cmap='Blues',
-    xticklabels=['Du doan: Legit', 'Du doan: DGA'],
-    yticklabels=['Thuc te: Legit', 'Thuc te: DGA']
-)
-
-plt.title('Confusion Matrix (Ma tran nham lan)')
+plt.figure(figsize=(8, 6))
+sns.heatmap(cm, annot=True, fmt='d', cmap='Greens', 
+            xticklabels=['Sach', 'DGA'], yticklabels=['Sach', 'DGA'])
+plt.title(f'XGBoost Confusion Matrix - Acc: {accuracy*100:.2f}%')
 plt.ylabel('Thuc te')
 plt.xlabel('Du doan')
-plt.tight_layout()
-plt.savefig('confusion_matrix.png')
-plt.show()
+plt.savefig('confusion_matrix_xgboost.png')
+plt.close()
 
-# 7. Biểu đồ Feature Importance
-plt.figure(figsize=(10, 6))
-xgb.plot_importance(
-    model,
-    importance_type='weight',
-    title='Feature Importance (Muc do quan trong dac trung)'
-)
-plt.tight_layout()
-plt.savefig('feature_importance.png')
-plt.show()
-
-# 8. Lưu mô hình
-joblib.dump(model, 'dga_detection_model.pkl')
-print("\nDa luu mo hinh vao file 'dga_detection_model.pkl'")
+# 6. Lưu model (Vẫn lưu tên cũ để file demo không phải sửa code)
+joblib.dump(best_model, 'dga_rf_model.pkl') 
+print("\nDa luu model (XGBoost) vao file 'dga_rf_model.pkl'")
