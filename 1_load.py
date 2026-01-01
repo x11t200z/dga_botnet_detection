@@ -6,8 +6,8 @@ import glob
 UMUDGA_ROOT_PATH = r"dataset\UMUDGA - University of Murcia Domain Generation Algorithm Dataset\Fully Qualified Domain Names" 
 TRANCO_PATH = os.path.join('dataset', 'tranco_2NP39-1m', 'top-1m.csv')
 
-# Số lượng mẫu cho mỗi họ Malware, vì có 51 họ, ta lấy 2000 mẫu mỗi họ để tổng cộng khoảng 102,000 mẫu DGA
-SAMPLES_PER_FAMILY = 2000 
+# Số lượng mẫu cho mỗi họ Malware, tổng có 50 họ
+SAMPLES_PER_FAMILY = 10000
 
 def load_dga_data(root_path):
     all_dga_domains = []
@@ -32,7 +32,6 @@ def load_dga_data(root_path):
             df_temp['label'] = 1
             df_temp['family'] = family
             
-            # [UPDATE] Lấy mẫu nhiều hơn
             if len(df_temp) > SAMPLES_PER_FAMILY:
                 df_temp = df_temp.sample(SAMPLES_PER_FAMILY, random_state=42)
             
@@ -49,46 +48,42 @@ def load_dga_data(root_path):
     return master_dga
 def is_valid_benign(domain):
     d = str(domain).lower()
-    # 1. Loại bỏ domain quá ngắn (dễ gây nhiễu)
+    # Loại bỏ domain quá ngắn (dễ gây nhiễu)
     if len(d) < 5: return False
-    # 2. Loại bỏ tên miền chứa 'xn--' (Punycode gây nhiễu)
+    # Loại bỏ Punycode gây nhiễu
     if 'xn--' in d: return False
-    # 3. Loại bỏ các đuôi CDN/Cloud phổ biến (làm model học sai)
+    # Loại bỏ các đuôi CDN/Cloud phổ biến làm model học sai
     if 'cloudfront' in d or 'amazonaws' in d or 'akamai' in d or 'azure' in d:
         return False
-    # 4. Loại bỏ domain là IP (nếu có)
+    # Loại bỏ domain là IP
     if d.replace('.', '').isdigit(): return False
     return True
 # --- THỰC THI ---
-# 1. Tải DGA
+# Tải DGA
 df_dga = load_dga_data(UMUDGA_ROOT_PATH)
 print(f"\nTong cong DGA domains: {len(df_dga)}")
 
-# 2. Tải Benign (Tranco)
+# 2. Tải benign
 print("\nDang tai Tranco list...")
 try:
     # Đọc file CSV
     df_benign = pd.read_csv(TRANCO_PATH, header=None, names=['rank', 'domain'])
     df_benign = df_benign[df_benign['domain'].apply(is_valid_benign)]
     # [QUAN TRỌNG - THAY ĐỔI Ở ĐÂY]
-    # Thay vì lấy ngẫu nhiên (sample), ta chỉ lấy Top đầu.
+    # Thay vì lấy ngẫu nhiên (sample), ta chỉ lấy top đầu.
     # Top 50,000 domain đầu tiên chắc chắn là domain xịn, không phải rác.
-    # Điều này giúp loại bỏ nhiễu (Noise) cực tốt.
     
     # Giới hạn số lượng bằng với số lượng DGA để cân bằng
     limit = len(df_dga)
     
-    # Lấy đúng 'limit' dòng đầu tiên (Top Ranking)
+    # Lấy đúng limit dòng đầu tiên
     df_benign = df_benign.iloc[:limit] 
-    
-    # CHÚ Ý: Nếu file Tranco chưa sắp xếp, hãy sort trước (thường file gốc đã sort rồi)
-    # df_benign = df_benign.sort_values(by='rank').iloc[:limit]
 
     df_benign = df_benign[['domain']]
     df_benign['label'] = 0
     df_benign['family'] = 'benign'
     
-    print(f"Da lay {len(df_benign)} ten mien sach (TOP RANKING).")
+    print(f"Da lay {len(df_benign)} ten mien sach")
     
 except Exception as e:
     print(f"Loi doc file Tranco: {e}")
@@ -104,6 +99,6 @@ if not df_dga.empty and not df_benign.empty:
     print(df_final['label'].value_counts())
     
     df_final.to_csv('dataset_full.csv', index=False)
-    print("\n[OK] Da luu 'dataset_full.csv' voi kich thuoc lon hon!")
+    print("\n[OK] Da luu 'dataset_full.csv'")
 else:
     print("\nCo loi xay ra.")

@@ -29,10 +29,8 @@ features_list = df.apply(extract_wrapper, axis=1).tolist()
 df_features = pd.DataFrame(features_list, columns=cols)
 df_final = pd.concat([df, df_features], axis=1)
 
-# Lưu file (6 features + label)
 cols_to_keep = cols + ['label']
 df_final[cols_to_keep].to_csv('dataset_training_ready.csv', index=False)
 
 print(f"\nDa luu 'dataset_training_ready.csv' voi {len(cols)} dac trung va label.")
 print(f"Kich thuoc du lieu: {df_final.shape}")
-print("\nHay chay file Train ngay!")

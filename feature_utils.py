@@ -13,13 +13,6 @@ if os.path.exists(WORDLIST_FILE):
     with open(WORDLIST_FILE, 'r', encoding='utf-8') as f:
         # Đọc từng dòng và đưa vào set
         COMMON_WORDS_SET = {line.strip().lower() for line in f}
-else:
-    # Fallback nếu quên chưa tải file (Giữ lại danh sách cũ làm dự phòng)
-    COMMON_WORDS_SET = {
-        'online', 'store', 'site', 'web', 'group', 'company', 'cloud', 'server', 'mail', 
-        'app', 'play', 'game', 'net', 'org', 'com', 'edu', 'gov', 'info', 'biz',
-        'news', 'blog', 'tech', 'shop', 'bank', 'card', 'secure', 'login'
-    }
 
 # Top Bigrams vẫn giữ nguyên
 COMMON_BIGRAMS = ['in', 'er', 'th', 'on', 'an', 'en', 'co', 're', 'or', 'st']
@@ -40,19 +33,17 @@ def calc_entropy(s):
     return -sum((count/lns) * math.log(count/lns, 2) for count in p.values())
 
 def meaningful_word_ratio_simple(domain):
-    """
-    Thuat toan Greedy Match voi tu dien 10,000 tu.
-    """
+    
+    # Greedy Match
     clean_domain = re.sub(r"[^a-z]", "", domain)
     original_len = len(clean_domain)
     if original_len == 0: return 0
     
     # Sắp xếp từ dài trước ngắn sau để ưu tiên từ dài (VD: 'notification' > 'not')
     # Lưu ý: Việc sort 10k từ mỗi lần chạy hàm sẽ chậm -> Nên sort 1 lần ở ngoài nếu muốn tối ưu cực đại
-    # Nhưng với Python hiện đại, việc này vẫn rất nhanh.
     sorted_words = sorted(list(COMMON_WORDS_SET), key=len, reverse=True)
     
-    # Tối ưu: Chỉ lấy các từ CÓ XUẤT HIỆN trong domain để loop (giảm số vòng lặp)
+    # Tối ưu: Chỉ lấy các từ có xuất hiện trong domain để loop (giảm số vòng lặp)
     potential_words = [w for w in sorted_words if w in clean_domain]
     
     found_len = 0

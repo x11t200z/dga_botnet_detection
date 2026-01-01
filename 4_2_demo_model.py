@@ -13,12 +13,12 @@ except ImportError:
 
 warnings.filterwarnings("ignore")
 
-model_filename = 'dga_rf_model.pkl'
+model_filename = 'dga_xgboost_model.pkl'
 print(f"[*] Dang tai mo hinh '{model_filename}'...")
 
 if not os.path.exists(model_filename):
     print(f"[!] LOI: Khong tim thay file '{model_filename}'.")
-    print("    Vui long chay file '3_train_random_forest.py' de huan luyen lai mo hinh voi 6 dac trung moi!")
+    print("    Vui long chay file '3_train_xgboost.py' de huan luyen lai mo hinh voi 6 dac trung moi!")
     sys.exit()
 
 try:
@@ -58,15 +58,13 @@ while True:
     print("   [Thong so ky thuat]:")
     print(f"   1. Do dai (Length):        {feat_dict['length']}")
     print(f"   2. Ty le so (Digits):      {feat_dict['digit_ratio']*100:.1f}%")
-    print(f"   3. Nguyen am (Vowels):     {feat_dict['vowel_ratio']*100:.1f}%  (Thap => Kho doc)")
-    print(f"   4. Phu am lien tiep (Max): {feat_dict['max_consonant_len']}     (Cao => Bat thuong)")
-    print(f"   5. Entropy (Do hon loan):  {feat_dict['entropy']:.2f}    (>3.5 thuong la DGA)")
-    print(f"   6. Co nghia (Meaningful):  {feat_dict['meaningful_ratio']*100:.1f}%  (Cao => Sach)")
+    print(f"   3. Nguyen am (Vowels):     {feat_dict['vowel_ratio']*100:.1f}%")
+    print(f"   4. Phu am lien tiep (Max): {feat_dict['max_consonant_len']}")
+    print(f"   5. Entropy (Do hon loan):  {feat_dict['entropy']:.2f}")
+    print(f"   6. Co nghia (Meaningful):  {feat_dict['meaningful_ratio']*100:.1f}%")
 
     try:
         prediction = int(model.predict(features_df)[0])
-        proba = model.predict_proba(features_df)[0][1] # Xác suất là DGA
-
         print("\n   [KET QUA CUOI CUNG]:")
         if prediction == 1:
             print(f"   >>> [CANH BAO] DGA MALWARE DETECTED! <<<")

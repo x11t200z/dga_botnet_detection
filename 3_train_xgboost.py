@@ -41,7 +41,6 @@ param_dist = {
 xgb_clf = xgb.XGBClassifier(
     objective='binary:logistic',
     eval_metric='logloss',
-    # Đã xóa dòng use_label_encoder
     random_state=42,
     n_jobs=-1
 )
@@ -50,7 +49,7 @@ xgb_clf = xgb.XGBClassifier(
 random_search = RandomizedSearchCV(
     xgb_clf, 
     param_distributions=param_dist, 
-    n_iter=20,          # Thử 20 tổ hợp ngẫu nhiên (chạy khá nhanh)
+    n_iter=100,          # Thử 30 tổ hợp ngẫu nhiên (chạy khá nhanh)
     scoring='accuracy', 
     n_jobs=-1, 
     cv=3, 
@@ -78,7 +77,7 @@ print(classification_report(y_test, y_pred, target_names=['Legit', 'DGA']))
 # 4. Phân tích đặc trưng quan trọng (Feature Importance)
 importances = best_model.feature_importances_
 indices = np.argsort(importances)[::-1]
-print("\nTop Dac trung quan trong nhat (XGBoost):")
+print("\nTop Dac trung quan trong nhat:")
 for i in range(len(X.columns)):
     print(f"{i+1}. {X.columns[indices[i]]} ({importances[indices[i]]:.4f})")
 
@@ -99,5 +98,5 @@ plt.savefig('confusion_matrix_xgboost.png')
 plt.close()
 
 # 6. Lưu model (Vẫn lưu tên cũ để file demo không phải sửa code)
-joblib.dump(best_model, 'dga_rf_model.pkl') 
-print("\nDa luu model (XGBoost) vao file 'dga_rf_model.pkl'")
+joblib.dump(best_model, 'dga_xgboost_model.pkl') 
+print("\nDa luu model (XGBoost) vao file 'dga_xgboost_model.pkl'")

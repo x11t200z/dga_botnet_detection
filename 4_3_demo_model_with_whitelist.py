@@ -26,7 +26,7 @@ except ImportError:
 warnings.filterwarnings("ignore")
 
 # --- CẤU HÌNH ---
-MODEL_PATH = 'dga_rf_model.pkl'
+MODEL_PATH = 'dga_xgboost_model.pkl'
 TRANCO_PATH = os.path.join('dataset', 'tranco_2NP39-1m', 'top-1m.csv')
 
 def print_banner():

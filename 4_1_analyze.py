@@ -31,9 +31,9 @@ except FileNotFoundError as e:
 # 2. Load Model
 print("2. Dang tai Model...")
 try:
-    model = joblib.load('dga_rf_model.pkl')
+    model = joblib.load('dga_xgboost_model.pkl')
 except FileNotFoundError:
-    print("[!] Khong tim thay file model 'dga_rf_model.pkl'")
+    print("[!] Khong tim thay file model 'dga_xgboost_model.pkl'")
     sys.exit()
 
 # 3. Thực hiện dự đoán
