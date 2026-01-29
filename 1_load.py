@@ -3,7 +3,7 @@ import pandas as pd
 import glob
 
 # --- CẤU HÌNH ---
-UMUDGA_ROOT_PATH = r"dataset\UMUDGA - University of Murcia Domain Generation Algorithm Dataset\Fully Qualified Domain Names" 
+UMUDGA_ROOT_PATH = os.path.join("dataset", "UMUDGA - University of Murcia Domain Generation Algorithm Dataset", "Fully Qualified Domain Names") 
 TRANCO_PATH = os.path.join('dataset', 'tranco_2NP39-1m', 'top-1m.csv')
 
 # Số lượng mẫu cho mỗi họ Malware, tổng có 50 họ

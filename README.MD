@@ -13,7 +13,7 @@ Dự án này xây dựng một mô hình phát hiện các tên miền được
 ```text
 ├── dataset/                     # Thư mục chứa dữ liệu thô (UMUDGA & Tranco)
 ├── 1_load.py                    # Bước 1: Load, làm sạch và cân bằng dữ liệu
-├── 2_feature_extration.py       # Bước 2: Trích xuất 9 đặc trưng từ tên miền
+├── 2_feature_extraction.py       # Bước 2: Trích xuất 9 đặc trưng từ tên miền
 ├── 3_train_xgboost.py           # Bước 3: Huấn luyện model
 ├── 4_1_analyze.py               # Bước 4.1: Phân tích lỗi
 ├── 4_2_demo_model.py            # Bước 4.2: Demo kiểm tra tên miền thời gian thực
@@ -75,7 +75,7 @@ python 1_load.py
 Chuyển đổi tên miền thành các vector số học.
 
 ```bash
-python 2_feature_extration.py
+python 2_feature_extraction.py
 ```
 
 *Output: `dataset_training_ready.csv*`

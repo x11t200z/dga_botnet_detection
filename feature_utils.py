@@ -7,12 +7,16 @@ import os
 # --- CẤU HÌNH LOAD TỪ ĐIỂN ---
 WORDLIST_FILE = 'google_10k_words.txt'
 COMMON_WORDS_SET = set()
+SORTED_COMMON_WORDS = []
 
 # Load từ điển khi import module
 if os.path.exists(WORDLIST_FILE):
     with open(WORDLIST_FILE, 'r', encoding='utf-8') as f:
         # Đọc từng dòng và đưa vào set
-        COMMON_WORDS_SET = {line.strip().lower() for line in f}
+        COMMON_WORDS_SET = {line.strip().lower() for line in f if line.strip()}
+    
+    # Sort 1 lần duy nhất khi load module để tối ưu hiệu năng
+    SORTED_COMMON_WORDS = sorted(list(COMMON_WORDS_SET), key=len, reverse=True)
 
 # Top Bigrams vẫn giữ nguyên
 COMMON_BIGRAMS = ['in', 'er', 'th', 'on', 'an', 'en', 'co', 're', 'or', 'st']
@@ -40,11 +44,9 @@ def meaningful_word_ratio_simple(domain):
     if original_len == 0: return 0
     
     # Sắp xếp từ dài trước ngắn sau để ưu tiên từ dài (VD: 'notification' > 'not')
-    # Lưu ý: Việc sort 10k từ mỗi lần chạy hàm sẽ chậm -> Nên sort 1 lần ở ngoài nếu muốn tối ưu cực đại
-    sorted_words = sorted(list(COMMON_WORDS_SET), key=len, reverse=True)
-    
     # Tối ưu: Chỉ lấy các từ có xuất hiện trong domain để loop (giảm số vòng lặp)
-    potential_words = [w for w in sorted_words if w in clean_domain]
+    # Su dung list da sort san (Global variable) thay vi sort lai moi lan
+    potential_words = [w for w in SORTED_COMMON_WORDS if w in clean_domain]
     
     found_len = 0
     temp_domain = clean_domain
