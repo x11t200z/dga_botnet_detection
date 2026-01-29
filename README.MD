@@ -57,7 +57,7 @@ pip install pandas numpy xgboost scikit-learn matplotlib seaborn tldextract jobl
 
 Dự án sử dụng 2 nguồn dữ liệu chính (Cần tải về và đặt vào folder `dataset`):
 
-* **DGA:** [UMUDGA Dataset](https://www.google.com/search?q=https://umudga.inf.um.es/) (Đại học Murcia).
+* **DGA:** [UMUDGA Dataset](https://github.com/Cyberdefence-Lab-Murcia/UMUDGA?tab=readme-ov-file).
 * **Benign:** [Tranco Top 1M](https://tranco-list.eu/).
 
 ### 3. Quy trình thực hiện
