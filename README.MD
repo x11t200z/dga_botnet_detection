@@ -13,12 +13,14 @@ Dự án này xây dựng một mô hình phát hiện các tên miền được
 ```text
 ├── dataset/                     # Thư mục chứa dữ liệu thô (UMUDGA & Tranco)
 ├── 1_load.py                    # Bước 1: Load, làm sạch và cân bằng dữ liệu
-├── 2_feature_extraction.py       # Bước 2: Trích xuất 9 đặc trưng từ tên miền
+├── 2_feature_extraction.py      # Bước 2: Trích xuất 9 đặc trưng từ tên miền
 ├── 3_train_xgboost.py           # Bước 3: Huấn luyện model
 ├── 4_1_analyze.py               # Bước 4.1: Phân tích lỗi
 ├── 4_2_demo_model.py            # Bước 4.2: Demo kiểm tra tên miền thời gian thực
+├── 4_3_demo_model_with_whitelist.py # Bước 4.3: Demo với cơ chế Whitelist
 ├── feature_utils.py             # Thư viện chứa các hàm tính toán đặc trưng
 ├── google_10k_words.txt         # Từ điển hỗ trợ tính 'meaningful ratio'
+├── requirements.txt             # Danh sách thư viện cần thiết
 └── README.md                    # Tài liệu dự án
 ```
 ## Feature engineering
@@ -50,7 +52,7 @@ Mô hình không đọc chuỗi ký tự (text) mà phân tích dựa trên 9 đ
 Cài đặt các thư viện cần thiết:
 
 ```bash
-pip install pandas numpy xgboost scikit-learn matplotlib seaborn tldextract joblib
+pip install -r requirements.txt
 ```
 
 ### 2. Chuẩn bị dữ liệu
@@ -103,6 +105,8 @@ Nhập tên miền bất kỳ để kiểm tra kết quả dự đoán.
 
 ```bash
 python 4_2_demo_model.py
+# Hoặc chạy bản có Whitelist (giảm False Positive với các domain phổ biến)
+python 4_3_demo_model_with_whitelist.py
 ```
 
 Ví dụ Demo:
