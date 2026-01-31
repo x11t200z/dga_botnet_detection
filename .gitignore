@@ -1,0 +1,15 @@
+# Python internals
+__pycache__/
+*.pyc
+
+# Virtual Environments
+venv/
+env/
+.venv/
+
+# IDE settings
+.vscode/
+.idea/
+
+# Models
+*.pkl
