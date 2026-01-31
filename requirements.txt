@@ -1,0 +1,9 @@
+pandas
+numpy
+xgboost
+scikit-learn
+matplotlib
+seaborn
+tldextract
+joblib
+tqdm

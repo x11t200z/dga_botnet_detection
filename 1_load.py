@@ -3,8 +3,11 @@ import pandas as pd
 import glob
 
 # --- CẤU HÌNH ---
-UMUDGA_ROOT_PATH = os.path.join("dataset", "UMUDGA - University of Murcia Domain Generation Algorithm Dataset", "Fully Qualified Domain Names") 
-TRANCO_PATH = os.path.join('dataset', 'tranco_2NP39-1m', 'top-1m.csv')
+# Sử dụng đường dẫn tuyệt đối hoặc tương đối tính từ file script
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+UMUDGA_ROOT_PATH = os.path.join(BASE_DIR, "dataset", "UMUDGA - University of Murcia Domain Generation Algorithm Dataset", "Fully Qualified Domain Names") 
+TRANCO_PATH = os.path.join(BASE_DIR, 'dataset', 'tranco_2NP39-1m', 'top-1m.csv')
+OUTPUT_CSV = os.path.join(BASE_DIR, 'dataset_full.csv')
 
 # Số lượng mẫu cho mỗi họ Malware, tổng có 50 họ
 SAMPLES_PER_FAMILY = 10000
@@ -12,6 +15,11 @@ SAMPLES_PER_FAMILY = 10000
 def load_dga_data(root_path):
     all_dga_domains = []
     print(f"Dang quet du lieu tu: {root_path}")
+    
+    if not os.path.exists(root_path):
+        print(f"[!] Khong tim thay thu muc: {root_path}")
+        return pd.DataFrame()
+        
     families = [f for f in os.listdir(root_path) if os.path.isdir(os.path.join(root_path, f))]
     print(f"Tim thay {len(families)} ho malware.")
     
@@ -95,10 +103,10 @@ if not df_dga.empty and not df_benign.empty:
     df_final = df_final.sample(frac=1, random_state=42).reset_index(drop=True)
     df_final['domain'] = df_final['domain'].astype(str).str.lower()
     
-    print("\n--- KET QUA CUOI CUNG ---")
+    print(f"\n--- KET QUA CUOI CUNG ---")
     print(df_final['label'].value_counts())
     
-    df_final.to_csv('dataset_full.csv', index=False)
-    print("\n[OK] Da luu 'dataset_full.csv'")
+    df_final.to_csv(OUTPUT_CSV, index=False)
+    print(f"\n[OK] Da luu '{OUTPUT_CSV}'")
 else:
     print("\nCo loi xay ra.")

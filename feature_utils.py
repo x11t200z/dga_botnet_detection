@@ -7,16 +7,17 @@ import os
 # --- CẤU HÌNH LOAD TỪ ĐIỂN ---
 WORDLIST_FILE = 'google_10k_words.txt'
 COMMON_WORDS_SET = set()
-SORTED_COMMON_WORDS = []
 
-# Load từ điển khi import module
-if os.path.exists(WORDLIST_FILE):
-    with open(WORDLIST_FILE, 'r', encoding='utf-8') as f:
-        # Đọc từng dòng và đưa vào set
-        COMMON_WORDS_SET = {line.strip().lower() for line in f if line.strip()}
-    
-    # Sort 1 lần duy nhất khi load module để tối ưu hiệu năng
-    SORTED_COMMON_WORDS = sorted(list(COMMON_WORDS_SET), key=len, reverse=True)
+def load_google_10k():
+    """Load dictionary into a set for fast lookup."""
+    global COMMON_WORDS_SET
+    if not COMMON_WORDS_SET and os.path.exists(WORDLIST_FILE):
+        with open(WORDLIST_FILE, 'r', encoding='utf-8') as f:
+            COMMON_WORDS_SET = {line.strip().lower() for line in f if line.strip()}
+    return COMMON_WORDS_SET
+
+# Load dictionary at import
+load_google_10k()
 
 # Top Bigrams vẫn giữ nguyên
 COMMON_BIGRAMS = ['in', 'er', 'th', 'on', 'an', 'en', 'co', 're', 'or', 'st']
@@ -25,6 +26,7 @@ def extract_main_domain(domain_str):
     try:
         domain_str = str(domain_str).lower()
         extracted = tldextract.extract(domain_str)
+        # If subdomain is long, it might be DGA part
         if len(extracted.subdomain) > 3: 
              return f"{extracted.subdomain}.{extracted.domain}"
         return extracted.domain
@@ -37,26 +39,41 @@ def calc_entropy(s):
     return -sum((count/lns) * math.log(count/lns, 2) for count in p.values())
 
 def meaningful_word_ratio_simple(domain):
-    
-    # Greedy Match
+    """
+    Optimized version: Check substrings against the dictionary set.
+    """
     clean_domain = re.sub(r"[^a-z]", "", domain)
-    original_len = len(clean_domain)
-    if original_len == 0: return 0
+    if not clean_domain: return 0
     
-    # Sắp xếp từ dài trước ngắn sau để ưu tiên từ dài (VD: 'notification' > 'not')
-    # Tối ưu: Chỉ lấy các từ có xuất hiện trong domain để loop (giảm số vòng lặp)
-    # Su dung list da sort san (Global variable) thay vi sort lai moi lan
-    potential_words = [w for w in SORTED_COMMON_WORDS if w in clean_domain]
+    n = len(clean_domain)
+    # Dynamic programming or simple greedy match could be used.
+    # Here is a greedy approach for performance: find longest valid word starting at each position.
     
-    found_len = 0
-    temp_domain = clean_domain
+    # However, to be closer to "ratio", we can count valid char coverage.
+    # Simple optimization: Iterate through all substrings and check if valid.
+    # But that's O(N^2). Since N is small (<255), it's fast.
     
-    for word in potential_words:
-        if word in temp_domain:
-            found_len += len(word)
-            temp_domain = temp_domain.replace(word, "", 1)
-            
-    return min(found_len / original_len, 1.0)
+    # Better approach for "ratio":
+    # Mark characters that belong to any meaningful word.
+    
+    is_meaningful = [False] * n
+    
+    if not COMMON_WORDS_SET:
+        return 0
+
+    # Max length of words in dictionary could be an optimization, but for 10k works it's fine.
+    # Most english words are < 20 chars.
+    max_word_len = 20 
+    
+    for i in range(n):
+        for j in range(i, min(i + max_word_len, n)):
+            sub = clean_domain[i : j+1]
+            if sub in COMMON_WORDS_SET:
+                # Mark range as meaningful
+                for k in range(i, j+1):
+                    is_meaningful[k] = True
+                    
+    return sum(is_meaningful) / n
 
 def hex_char_ratio(domain):
     if not domain: return 0
